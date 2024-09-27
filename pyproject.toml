@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "telemetry-publisher"
+version = "0.2.0"
+description = "Telemetry publisher to Apache Kafka"
+authors = ["Fernando Abreu <49952773+nandoabreu@users.noreply.github.com>"]
+license = "MIT License"
+readme = "README.md"
+packages = [{ include = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+tomli = { version = "^2.0.1", python = "<3.11" }
+prettyconf = "^2.2.1"
+python-dateutil = "^2.9.0.post0"
+confluent-kafka = "^2.5.3"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+cython = "^3.0.11"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
