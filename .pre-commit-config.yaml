@@ -10,6 +10,7 @@ repos:
       - id: trailing-whitespace
       - id: check-case-conflict
       - id: double-quote-string-fixer
+        verbose: true
       - id: end-of-file-fixer
       - id: mixed-line-ending
         args: [ '--fix=lf' ]
@@ -20,6 +21,7 @@ repos:
       - id: check-added-large-files
       - id: check-executables-have-shebangs
       - id: check-shebang-scripts-are-executable
+      - id: check-docstring-first
       - id: check-symlinks
       - id: destroyed-symlinks
       - id: check-json
@@ -28,10 +30,9 @@ repos:
       - id: check-yaml
       - id: pretty-format-json
         args: [ '--autofix', '--no-sort-keys' ]
-      - id: check-docstring-first
-      #      - id: detect-aws-credentials
       - id: detect-private-key
-      - id: forbid-submodules
+#      - id: detect-aws-credentials
+#      - id: forbid-submodules
       - id: check-merge-conflict
 #      - id: no-commit-to-branch
 #        args: [ --branch, staging, --branch, test, --branch, main ]
@@ -41,6 +42,11 @@ repos:
     hooks:
       - id: flake8
         args: [ '--max-line-length=120', '--exclude=tests/*' ]
+
+#  - repo: https://github.com/psf/black-pre-commit-mirror
+#    rev: 24.8.0
+#    hooks:
+#      - id: black
 
   - repo: https://github.com/pre-commit/mirrors-autopep8
     rev: 'v2.0.1'
@@ -62,20 +68,20 @@ repos:
     hooks:
       - id: python-no-log-warn
 
-  - repo: https://github.com/asottile/add-trailing-comma
-    rev: v3.1.0
-    hooks:
-      - id: add-trailing-comma
+#  - repo: https://github.com/asottile/add-trailing-comma
+#    rev: v3.1.0
+#    hooks:
+#      - id: add-trailing-comma
 
 #  - repo: https://github.com/asottile/pyupgrade
 #    rev: v3.17.0
 #    hooks:
 #      - id: pyupgrade
 
-  - repo: https://github.com/asottile/dead
-    rev: v1.5.2
-    hooks:
-      - id: dead
+#  - repo: https://github.com/asottile/dead
+#    rev: v1.5.2
+#    hooks:
+#      - id: dead
 
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.5.5
@@ -84,13 +90,15 @@ repos:
       - id: remove-crlf
       - id: forbid-tabs
 
-#  - repo: local
-#    hooks:
-#      - id: pytest-unit
-#        name: pytest-unit
-#        language: system
-#        entry: env PYTHONPATH=src /home/common/bin/pypoetry/bin/poetry run python -m pytest tests/unit --cov --cov-branch --cov-report term-missing
-#        types: [ python ]
-#        pass_filenames: false
-#        always_run: true
-#        stages: [ commit ]
+  - repo: local
+    hooks:
+      - id: pytest-unit
+        name: pytest-unit
+        language: system
+        entry: >
+          bash -c 'env PYTHONPATH=$VIRTUAL_ENV/lib/python$(cat .python-version)/site-packages:src
+          python3 -m pytest tests/unit --cov=app --cov-branch --cov-report term-missing'
+        types: [ python ]
+        pass_filenames: false
+        always_run: true
+        stages: [ commit ]
