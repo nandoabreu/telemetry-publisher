@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Main configuration file for the project.
 
 *** UPDATE env.toml AND RUN `make` or `make self-test` TO SET .env ***
@@ -37,6 +38,7 @@ PROJECT_ROOT_DIR: Path = SRC_BASE_DIR.parent
 LOG_ROTATION_MAX_MB: float = config('LOG_ROTATION_MAX_MB', cast=float, default='9')
 LOG_MAX_ROTATED_FILES: int = config('LOG_MAX_ROTATED_FILES', cast=int, default='5')
 
+HOSTNAME_CMD_PATH: str = config('HOSTNAME_CMD_PATH', default='/usr/bin/hostname')
 KAFKA_BROKERS: list = sorted(d for d in config('KAFKA_BROKERS', default='').split(','))
 KAFKA_PARTITIONS: int = config('KAFKA_PARTITIONS', cast=int, default='1')
 KAFKA_RETENTION_DAYS: int = config('KAFKA_RETENTION_DAYS', cast=int, default='3')

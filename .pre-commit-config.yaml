@@ -32,7 +32,7 @@ repos:
         args: [ '--autofix', '--no-sort-keys' ]
       - id: detect-private-key
 #      - id: detect-aws-credentials
-#      - id: forbid-submodules
+      - id: forbid-submodules
       - id: check-merge-conflict
 #      - id: no-commit-to-branch
 #        args: [ --branch, staging, --branch, test, --branch, main ]
@@ -68,10 +68,10 @@ repos:
     hooks:
       - id: python-no-log-warn
 
-#  - repo: https://github.com/asottile/add-trailing-comma
-#    rev: v3.1.0
-#    hooks:
-#      - id: add-trailing-comma
+  - repo: https://github.com/asottile/add-trailing-comma
+    rev: v3.1.0
+    hooks:
+      - id: add-trailing-comma
 
 #  - repo: https://github.com/asottile/pyupgrade
 #    rev: v3.17.0
