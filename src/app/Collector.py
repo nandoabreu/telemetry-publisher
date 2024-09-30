@@ -12,8 +12,9 @@ from re import sub
 from .config import (
     HOSTNAME_CMD_PATH,
     GREP_CMD_PATH,
-    SENSORS_CMD_PATH,
     CAT_CMD_PATH,
+    SENSORS_CMD_PATH,
+    NVIDIA_CMD_PATH,
 )
 
 
@@ -40,7 +41,7 @@ class Collector:
 
         try:
             res = self._run_os_command(cmd)
-            self._log_debug(f'Command returned: {res}')
+            self._log_debug(f'Command returned: {res}')  # expected: ['Package id 0:      +70.0°C ... ']
 
             if not res['stdout']:
                 raise OSError('no sensors data')
@@ -74,7 +75,7 @@ class Collector:
 
         return res
 
-    def _fetch_thermal_zones_files(self):
+    def _fetch_thermal_zones_files(self) -> dict:
         """Update self._last_cpu_data property with data from CPU thermal zones (cores)
 
         Some hardware handle temperature in files that can be catted.
@@ -85,7 +86,7 @@ class Collector:
 
         try:
             res = self._run_os_command(cmd)
-            self._log_debug(f'Command returned: {res}')
+            self._log_debug(f'Command returned: {res}')  # expected: ['20000', '47050', '61050',]
 
             if not res['stdout']:
                 raise OSError('no thermal zone data')
@@ -99,6 +100,34 @@ class Collector:
         self._log_debug(f'Fetched data: {data}')
 
         res = {'cpu': data} if data else {}
+        return res
+
+    def _probe_nvidia_gpu(self) -> dict:
+        """Probe GPU temperatures from the nvidia modules
+
+        Returns:
+            (float): a single value returned from the nvidia-smi call
+        """
+        self._log_debug('Start nvidia probe')
+
+        cmd = f'{NVIDIA_CMD_PATH} --query-gpu=temperature.gpu --format=csv'
+
+        try:
+            res = self._run_os_command(cmd)
+            self._log_debug(f'Command returned: {res}')  # expected: ['temperature.gpu', '49']
+
+            if not res['stdout']:
+                raise OSError('no nvidia data')
+
+        except OSError as e:
+            if 'not found' in str(e):
+                e = 'update variable NVIDIA_CMD_PATH (nvidia-smi) in the env.toml file and then check .env'
+            raise OSError(f'Could not probe sensors: install lm_sensors, if possible\n{e}')
+
+        data = None if len(res['stdout']) < 2 else float(res['stdout'][1])
+        self._log_debug(f'Fetched data: {data}')
+
+        res = {'gpu': data} if data else {}
         return res
 
     def _identify(self):
