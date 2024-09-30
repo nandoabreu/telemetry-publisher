@@ -22,10 +22,20 @@ class Collector:
         self._identify()
 
     def _identify(self):
-        res = self._run_os_command(f'{HOSTNAME_CMD_PATH} -s')
+        self._log_debug('Start device identification')
+        cmd = f'{HOSTNAME_CMD_PATH} -s'
 
-        if not res['stdout']:
-            raise OSError(f'Could not identify this device: {res["err"]}')
+        try:
+            res = self._run_os_command(cmd)
+            self._log_debug(f"Command returned: {res}")
+
+            if not res['stdout']:
+                raise OSError("no hostname data")
+
+        except OSError as e:
+            if 'not found' in str(e):
+                e = 'update the variable HOSTNAME_CMD_PATH in the env.toml file and then check .env'
+            raise OSError(f'Could not identify this device: {e}')
 
         self.device = res['stdout'][0]
 
