@@ -4,8 +4,10 @@ Description
 """
 from copy import deepcopy
 from subprocess import run
+from re import sub
+from time import time
 
-from .config import HOSTNAME_CMD_PATH
+from .config import HOSTNAME_CMD_PATH, GREP_CMD_PATH, SENSORS_CMD_PATH
 
 
 class Collector:
@@ -18,8 +20,55 @@ class Collector:
         self._last_probe = {"epoch": 0}
 
         self.device = None
-        self._log_debug('Request device identification')
         self._identify()
+
+    def _probe_lm_sensors(self):
+        """Update self._last_cpu_data property with data from the sensors command"""
+        self._log_debug('Start sensors probe')
+        cmd = '{sensors} | {grep} -e Package -e Tctl -e CPU -e coretemp -e GPU -e edge | {grep} °C'.format(
+            sensors=SENSORS_CMD_PATH, grep=GREP_CMD_PATH,
+        )
+
+        try:
+            res = self._run_os_command(cmd)
+            self._log_debug(f"Command returned: {res}")
+
+            if not res['stdout']:
+                raise OSError("no sensors data")
+
+        except OSError as e:
+            if 'not found' in str(e):
+                e = 'update variables SENSORS_CMD_PATH and GREP_CMD_PATH in the env.toml file and then check .env'
+            raise OSError(f'Could not probe sensors: install lm_sensors, if possible\n{e}')
+
+        data = {}
+        for line in res['stdout']:
+            chunks = line.split(":")
+            key = chunks[0].strip()
+            val = sub(r'[^0-9.+-]', '', chunks[1].split()[0])
+            data[key] = float(val)
+        self._log_debug(f"Parsed data: {data}")
+
+        self._last_cpu_data["temperature"] = \
+            data.get("Package id 0") or data.get("Tctl") or data.get("CPU") or data.get("coretemp")
+
+        self._last_gpu_data["temperature"] = \
+            data.get("GPU") or data.get("GPU temp") or data.get("edge")
+
+        if self._last_cpu_data["temperature"]:
+            self._last_cpu_data["source"] = 'sensors'
+            self._last_cpu_data["method"] = 'raw elected value'
+
+        if self._last_gpu_data["temperature"]:
+            self._last_gpu_data["source"] = 'sensors'
+            self._last_gpu_data["method"] = 'raw elected value'
+
+        self._last_probe.update({
+            'epoch': int(time()),
+            'cpu': self._last_cpu_data if self._last_cpu_data["temperature"] else {},
+            'gpu': self._last_gpu_data if self._last_gpu_data["temperature"] else {},
+            'data': {'sensors': data},
+        })
 
     def _identify(self):
         self._log_debug('Start device identification')
