@@ -3,11 +3,18 @@
 Description
 """
 from copy import deepcopy
+# from inspect import currentframe
+# from re import sub
 from subprocess import run
 from re import sub
-from time import time
+# from time import time
 
-from .config import HOSTNAME_CMD_PATH, GREP_CMD_PATH, SENSORS_CMD_PATH
+from .config import (
+    HOSTNAME_CMD_PATH,
+    GREP_CMD_PATH,
+    SENSORS_CMD_PATH,
+    CAT_CMD_PATH,
+)
 
 
 class Collector:
@@ -45,11 +52,11 @@ class Collector:
 
         data = {}
         for line in res['stdout']:
-            chunks = line.split(":")
+            chunks = line.split(':')
             key = chunks[0].strip()
             val = sub(r'[^0-9.+-]', '', chunks[1].split()[0])
             data[key] = float(val)
-        self._log_debug(f"Parsed data: {data}")
+        self._log_debug(f'Parsed data: {data}')
 
         res = {}
         fetch = {
@@ -67,23 +74,32 @@ class Collector:
 
         return res
 
-        self._last_gpu_data["temperature"] = \
-            data.get("GPU") or data.get("GPU temp") or data.get("edge")
+    def _fetch_thermal_zones_files(self):
+        """Update self._last_cpu_data property with data from CPU thermal zones (cores)
 
-        if self._last_cpu_data["temperature"]:
-            self._last_cpu_data["source"] = 'sensors'
-            self._last_cpu_data["method"] = 'raw elected value'
+        Some hardware handle temperature in files that can be catted.
+        """
+        self._log_debug('Start thermal zone fetch')
 
-        if self._last_gpu_data["temperature"]:
-            self._last_gpu_data["source"] = 'sensors'
-            self._last_gpu_data["method"] = 'raw elected value'
+        cmd = f'{CAT_CMD_PATH} /sys/class/thermal/thermal_zone*/temp'
 
-        self._last_probe.update({
-            'epoch': int(time()),
-            'cpu': self._last_cpu_data if self._last_cpu_data["temperature"] else {},
-            'gpu': self._last_gpu_data if self._last_gpu_data["temperature"] else {},
-            'data': {'sensors': data},
-        })
+        try:
+            res = self._run_os_command(cmd)
+            self._log_debug(f'Command returned: {res}')
+
+            if not res['stdout']:
+                raise OSError('no thermal zone data')
+
+        except OSError as e:
+            if 'not found' in str(e):
+                e = 'update variable CAT_CMD_PATH in the env.toml file and then check .env'
+            raise OSError(f'Could not fetch thermal zones: hardware may not report thermal zones\n{e}')
+
+        data = [round(float(t) / 1000, 3) for t in res['stdout']]
+        self._log_debug(f'Fetched data: {data}')
+
+        res = {'cpu': data} if data else {}
+        return res
 
     def _identify(self):
         self._log_debug('Start device identification')
