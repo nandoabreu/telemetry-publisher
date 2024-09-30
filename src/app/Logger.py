@@ -92,7 +92,7 @@ class Logger(metaclass=Singleton):
         self.logger.log(10, 'I will rotate {} log files, at {} bytes'.format(rotated_files, rotation_bytes))
 
     @property
-    def logger(self):
+    def logger(self) -> logging:
         """The actual logging property to be used all around."""
         return self._logger
 
@@ -101,7 +101,7 @@ class Logger(metaclass=Singleton):
         self._logger = logger
 
     @property
-    def level(self):
+    def level(self) -> str:
         """Fetch current log level"""
         return self._level
 
@@ -152,7 +152,7 @@ class Logger(metaclass=Singleton):
         handler.setFormatter(formatter)
 
     @staticmethod
-    def _namer(name):  # noqa: D102, D205
+    def _namer(name) -> str:  # noqa: D102, D205
         """Set log (and rotated log files) to have *.N.log as suffix, instead of *.log.N.
         i.e.: project-name.log.1 (logging standard) becomes project-name.1.log
         """
