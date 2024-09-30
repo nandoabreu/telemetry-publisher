@@ -17,24 +17,26 @@ class Collector:
         self.logger = logger
         self._last_cpu_data = deepcopy(self.TEMPLATE)
         self._last_gpu_data = deepcopy(self.TEMPLATE)
-        self._last_probe = {"epoch": 0}
+        self._last_probe = {'epoch': 0}
 
         self.device = None
         self._identify()
 
-    def _probe_lm_sensors(self):
+    def _probe_lm_sensors(self) -> dict:
         """Update self._last_cpu_data property with data from the sensors command"""
         self._log_debug('Start sensors probe')
-        cmd = '{sensors} | {grep} -e Package -e Tctl -e CPU -e coretemp -e GPU -e edge | {grep} °C'.format(
-            sensors=SENSORS_CMD_PATH, grep=GREP_CMD_PATH,
+
+        filters = ('Package', 'Tctl', 'CPU', 'GPU', 'edge')
+        cmd = '{s} | {g} -e {f} | {g} °C'.format(
+            s=SENSORS_CMD_PATH, f=' -e '.join(filters), g=GREP_CMD_PATH,
         )
 
         try:
             res = self._run_os_command(cmd)
-            self._log_debug(f"Command returned: {res}")
+            self._log_debug(f'Command returned: {res}')
 
             if not res['stdout']:
-                raise OSError("no sensors data")
+                raise OSError('no sensors data')
 
         except OSError as e:
             if 'not found' in str(e):
@@ -49,8 +51,21 @@ class Collector:
             data[key] = float(val)
         self._log_debug(f"Parsed data: {data}")
 
-        self._last_cpu_data["temperature"] = \
-            data.get("Package id 0") or data.get("Tctl") or data.get("CPU") or data.get("coretemp")
+        res = {}
+        fetch = {
+            'cpu': ('Package id 0', 'Tctl', 'CPU', 'coretemp'),
+            'gpu': ('GPU', 'GPU temp', 'edge'),
+        }
+
+        for unit, keys in fetch.items():
+            for key in keys:
+                if key in data:
+                    if unit not in res:
+                        res[unit] = {}
+
+                    res[unit][key] = data[key]
+
+        return res
 
         self._last_gpu_data["temperature"] = \
             data.get("GPU") or data.get("GPU temp") or data.get("edge")
