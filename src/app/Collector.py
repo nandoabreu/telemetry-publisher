@@ -7,7 +7,7 @@ from copy import deepcopy
 # from re import sub
 from subprocess import run
 from re import sub
-# from time import time
+from time import time
 
 from .config import (
     HOSTNAME_CMD_PATH,
@@ -29,6 +29,36 @@ class Collector:
 
         self.device = None
         self._identify()
+
+    @property
+    def data(self) -> dict:
+        """Retrieve all available CPU and GPU temperatures"""
+        self._log_debug('Start data retrieval')
+
+        retrieval_threshold_sec: int = 20
+        if (time() - self._last_probe['epoch']) < retrieval_threshold_sec:
+            self._log_debug(f'Return recent data (queried less than {retrieval_threshold_sec} seconds ago)')
+            return self._last_probe
+
+        self._last_probe = {'epoch': int(time())}
+
+        for method, label in {
+            self._probe_lm_sensors: 'sensors',
+            self._fetch_thermal_zones: 'thermal_zones',
+            self._probe_nvidia_gpu: 'nvidia',
+        }.items():
+            res = method and method()
+            if res:
+                self._log_debug(f'{label} returned: {res}')
+
+                for unit, data in res.items():
+                    print(f'{unit=} / {data=}')
+                    if unit not in self._last_probe:
+                        self._last_probe[unit] = {}
+
+                    self._last_probe[unit][label] = data
+
+        return self._last_probe
 
     def _probe_lm_sensors(self) -> dict:
         """Update self._last_cpu_data property with data from the sensors command"""
@@ -75,7 +105,7 @@ class Collector:
 
         return res
 
-    def _fetch_thermal_zones_files(self) -> dict:
+    def _fetch_thermal_zones(self) -> dict:
         """Update self._last_cpu_data property with data from CPU thermal zones (cores)
 
         Some hardware handle temperature in files that can be catted.

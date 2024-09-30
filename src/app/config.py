@@ -42,7 +42,6 @@ HOSTNAME_CMD_PATH: str = config('HOSTNAME_CMD_PATH', default='/usr/bin/hostname'
 GREP_CMD_PATH: str = config('GREP_CMD_PATH', default='/usr/bin/grep')
 CAT_CMD_PATH: str = config('CAT_CMD_PATH', default='/usr/bin/cat')
 SENSORS_CMD_PATH: str = config('SENSORS_CMD_PATH', default='/usr/bin/sensors')
-CAT_CMD_PATH: str = config('CAT_CMD_PATH', default='/usr/bin/cat')
 NVIDIA_CMD_PATH: str = config('NVIDIA_CMD_PATH', default='/usr/bin/nvidia-smi')
 KAFKA_BROKERS: list = sorted(d for d in config('KAFKA_BROKERS', default='').split(','))
 KAFKA_PARTITIONS: int = config('KAFKA_PARTITIONS', cast=int, default='1')
