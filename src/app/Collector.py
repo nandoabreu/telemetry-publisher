@@ -1,10 +1,10 @@
 """My Python module
 
 Description
+
+todo: test `hwinfo --sensors`
 """
 from copy import deepcopy
-# from inspect import currentframe
-# from re import sub
 from subprocess import run
 from re import sub
 from time import time
@@ -47,7 +47,17 @@ class Collector:
             self._fetch_thermal_zones: 'thermal_zones',
             self._probe_nvidia_gpu: 'nvidia',
         }.items():
-            res = method and method()
+            res = None
+
+            try:
+                res = method and method()
+                print(f'{res=}')
+
+            except OSError as e:
+                for err in str(e).split('\n'):
+                    if len(err) > 10:
+                        self._log_debug(err)
+
             if res:
                 self._log_debug(f'{label} returned: {res}')
 
