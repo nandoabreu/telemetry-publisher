@@ -61,7 +61,7 @@ class Logger(metaclass=Singleton):
         name = name.replace(' ', '-').lower()
 
         logs_dir.mkdir(parents=True, exist_ok=True)
-        log_filepath = logs_dir / name
+        log_filepath = logs_dir / f'{name}.log'
 
         rotation_bytes = int(1024 * 1024 * rotation_mb)
 
