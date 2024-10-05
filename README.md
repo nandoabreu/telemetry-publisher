@@ -2,28 +2,26 @@
 
 Telemetry publisher to Apache Kafka
 
-This app can query telemetry against local or remore hosts.
-It is designed to run locally, sending local data to a remote broker,
-but remote hosts can be set, in case the app can not run from some devices.
+This app can query telemetry against the local host.
+It is designed to run locally, sending local data to a remote broker.
 
 
 ## Requirements
 
 If the app is set in the same host it queries, this host must have all requirements from
-both [Hosts running](#hosts-running-this-app) and [Target hosts](#target-hosts-for-this-app).
+both [Hosts running](#hosts-running-this-app) and at least one from the [Target hosts](#target-hosts-for-this-app).
 
-### Hosts running this app
+### Query data
 
-#### OS packages
-
-- nmap
-- ping
-- ssh
-
-
-### Target hosts for this app
+This program probes data from several sources and present all found.
+At least one of the following is required to return data.
 
 #### OS packages
 
-- ~vcgencmd~ (to be discontinued)
-- lm-sensors (in case the kernel doesn't handle ACPI by itself)
+
+- lm-sensors (CPU recommended)
+- nvidia-smi (NVIDIA GPU recommended)
+
+#### CPU thermal zones
+
+Files in `/sys/class/thermal/thermal_zone*` are queried. Some distro report in this structure.
