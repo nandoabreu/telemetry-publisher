@@ -1,8 +1,12 @@
-#!/usr/bin/env make
 SHELL := $(shell type bash | cut -d\  -f3)
 POETRY_PATH := $(shell type poetry | cut -d\  -f3)
 PROJECT_DIR := $(shell realpath .)
 HOST_IP := $(shell ip -o -4 address | grep -v 127.0.0 | head -1 | awk '{print $$4}' | cut -d/ -f1)
+
+VIRTUAL_ENV ?= $(shell poetry env info -p)
+PYTHON_VERSION := $(shell cat .python-version 2>/dev/null || python3 -V | sed "s,.* \(3\.[0-9]\+\)\..*,\1,")
+
+BUILD_DIR ?= build
 
 $(shell eval run=dev python setup/dotenv-from-toml.py > .env)
 include .env
@@ -14,9 +18,10 @@ self-test:
 	Project: ${PROJECT_NAME} (${PROJECT_DESCRIPTION})\n\
 	Source files: ${PROJECT_DIR}/${SRC_DIR}\n\
 	Virtual env: $(shell poetry env info -p)\n\
+	Current Python: ${PYTHON_VERSION}\n\
 	""" | sed "s,: ,:|,;s,^\t,," | column -t -s\|
 
-setup-dev:
+env-setup:
 	@git init
 	@[ -f .python-version ] && poetry env use $(shell cat .python-version) >/dev/null || true
 	@poetry install -v
@@ -30,8 +35,9 @@ test-unit-coverage:
 	@PYTHONPATH=${SRC_DIR} poetry run python -m pytest tests/ --cov --cov-branch --cov-report term-missing
 
 collect-and-publish:
-	@echo "Start active (pull) collects"
-	LOG_LEVEL=${LOG_LEVEL} PATH=$(shell poetry env info -p)/bin PYTHONPATH=${SRC_DIR} python -m app
+	LOG_LEVEL="${LOG_LEVEL}" \
+	PYTHONPATH="${VIRTUAL_ENV}/lib/python${PYTHON_VERSION}/site-packages:${SRC_DIR}" \
+	python -m "${APP_DIR}"
 
 
 build:
@@ -43,6 +49,7 @@ build:
 	@cp setup/.env build/
 	@find ${SRC_DIR} -type f -name *\.c -delete
 	@rm -rf "build/temp.linux"*
+
 
 run-kafka-ui:
 	@podman run --rm -d --network=host --hostname=kafka-ui --name=kafka-ui \
