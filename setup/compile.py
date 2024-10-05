@@ -3,16 +3,18 @@
 This module uses Cython to compile Python v3 source codes into C binaries
 The C binaries compiled by Cython can be imported as any other Python module
 """
-from Cython.Distutils import build_ext
-from distutils.extension import Extension
-from distutils.core import setup
+from Cython.Build import cythonize
+from setuptools import Extension, setup
 from glob import iglob
 from os import environ
 
 APP_NAME = environ.get("APP_NAME", "App Name")
 APP_VERSION = environ.get("APP_VERSION", "1.0.0")
 PROJECT_NAME = environ.get("PROJECT_NAME", "project-name")
-PROJECT_DESCRIPTION = environ.get("PROJECT_DESCRIPTION", default="{} v{}".format(APP_NAME, APP_VERSION))
+PROJECT_DESCRIPTION = environ.get(
+    "PROJECT_DESCRIPTION",
+    default="{} v{}".format(APP_NAME, APP_VERSION),
+)
 
 print(f"{PROJECT_NAME} Compile :: Prepare source files")
 
@@ -34,10 +36,9 @@ setup(
     description=APP_NAME,
     long_description=PROJECT_DESCRIPTION,
     version=APP_VERSION,
-    cmdclass={"build_ext": build_ext},
-    ext_modules=ext_modules,
+    ext_modules=cythonize(ext_modules),
     install_requires=["prettyconf"],
-    password="xpto",
+    password="xpto",  # todo: ensure this is secure if actually needed
 )
 
 print(f"{PROJECT_NAME} Compile :: Compilation ends. Binaries to be placed in build/app/")
