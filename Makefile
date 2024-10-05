@@ -12,7 +12,7 @@ $(shell eval run=dev python setup/dotenv-from-toml.py > .env)
 include .env
 
 
-self-test:
+env-info:
 	@echo -e """\
 	Application: ${APP_NAME} v${APP_VERSION}\n\
 	Project: ${PROJECT_NAME} (${PROJECT_DESCRIPTION})\n\
@@ -24,7 +24,7 @@ self-test:
 env-setup:
 	@git init
 	@[ -f .python-version ] && poetry env use $(shell cat .python-version) >/dev/null || true
-	@poetry install -v
+	@poetry install --no-root -v
 	@poetry run pre-commit install
 	@sed -i "/^INSTALL_PYTHON=.*/a PATH=${POETRY_PATH}:\$$INSTALL_PYTHON/bin:\$$PATH" .git/hooks/pre-commit
 
@@ -39,6 +39,15 @@ collect-and-publish:
 	PYTHONPATH="${VIRTUAL_ENV}/lib/python${PYTHON_VERSION}/site-packages:${SRC_DIR}" \
 	python -m "${APP_DIR}"
 
+
+build-dependencies:
+	rm -rf "${BUILD_DIR}/dependencies" && mkdir -p "${BUILD_DIR}/dependencies"
+	poetry show --without=dev | awk '{print $$1}' | sed "s,.*-,," > /tmp/dep-names.txt
+	cd "${VIRTUAL_ENV}"/lib/python*/*packages \
+		&& cat /tmp/dep-names.txt | xargs -I {} find . -name "*{}*" -maxdepth 1 \
+		&& cp -r
+	cd "${VIRTUAL_ENV}"/lib/python*/*packages && \
+		cat /tmp/dep-names.txt | xargs -I {} find . -name "*{}*" -maxdepth 1 > /tmp/dep-files.txt
 
 build:
 	@python setup/dotenv-from-toml.py > setup/.env
