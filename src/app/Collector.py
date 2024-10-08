@@ -51,7 +51,6 @@ class Collector:
 
             try:
                 res = method and method()
-                print(f'{res=}')
 
             except OSError as e:
                 for err in str(e).split('\n'):
@@ -62,7 +61,6 @@ class Collector:
                 self._log_debug(f'{label} returned: {res}')
 
                 for unit, data in res.items():
-                    print(f'{unit=} / {data=}')
                     if unit not in self._last_probe:
                         self._last_probe[unit] = {}
 
