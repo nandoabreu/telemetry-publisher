@@ -37,9 +37,7 @@ test-unit-coverage:
 	@PYTHONPATH=${SRC_DIR} poetry run python -m pytest tests/ --cov --cov-branch --cov-report term-missing
 
 collect-and-publish:
-	LOG_LEVEL="${LOG_LEVEL}" \
-	PYTHONPATH="${VIRTUAL_ENV}/lib/python${PYTHON_VERSION}/site-packages:${SRC_DIR}" \
-	python -m "${APP_DIR}"
+	@bash setup/collect-and-publish.bash
 
 
 build: build-recreate-dir build-compile toss-build-temp
