@@ -8,37 +8,62 @@ from setuptools import Extension, setup
 from glob import iglob
 from os import environ
 
-APP_NAME = environ.get("APP_NAME", "App Name")
-APP_VERSION = environ.get("APP_VERSION", "1.0.0")
-PROJECT_NAME = environ.get("PROJECT_NAME", "project-name")
+APP_NAME = environ.get('APP_NAME', default='App Name')
+APP_VERSION = environ.get('APP_VERSION', default='1.0.0')
+PROJECT_NAME = environ.get('PROJECT_NAME', default='project-name')
 PROJECT_DESCRIPTION = environ.get(
-    "PROJECT_DESCRIPTION",
-    default="{} v{}".format(APP_NAME, APP_VERSION),
+    'PROJECT_DESCRIPTION',
+    default='{} v{}'.format(APP_NAME, APP_VERSION),
 )
+MAINTAINER = environ.get('MAINTAINER', default='Fernando R Abreu')
 
-print(f"{PROJECT_NAME} Compile :: Prepare source files")
+true_strings = ('true', 'yes', 'y', '1')
+SINGLE_BINARY = str(environ.get('SINGLE_BINARY', default=False)).lower() in true_strings
+VERBOSE = str(environ.get('VERBOSE', default=False)).lower() in true_strings
 
-ext_modules = []
-for filepath in iglob("src/**/*.py", recursive=True):
-    if "__.py" in filepath:
-        continue
 
-    module = ".".join(filepath.split("/")[1:]).replace(".py", "")
+print(f'{PROJECT_NAME} Compile :: Prepare source files')
 
-    extension = Extension(module, [filepath])
-    extension.cython_directives = {"language_level": "3"}
-    ext_modules.append(extension)
+modules = list(set([f for f in iglob('src/**/*.py', recursive=True) if '/__' not in f]))
+extensions = []
 
-print(f"{PROJECT_NAME} Compile :: Start binaries creation")
+if SINGLE_BINARY:  # todo: this works, but atm the App does not start
+    extension = Extension('app', modules)
+    extensions.append(extension)
 
-setup(
+else:
+    for filepath in modules:
+        module = '.'.join(filepath.split('/')[1:]).replace('.py', '')
+        extension = Extension(module, [filepath])
+        extensions.append(extension)
+
+
+print(f'{PROJECT_NAME} Compile :: Start compilation')
+
+res = setup(
     name=PROJECT_NAME,
-    description=APP_NAME,
+    description=PROJECT_DESCRIPTION,
     long_description=PROJECT_DESCRIPTION,
     version=APP_VERSION,
-    ext_modules=cythonize(ext_modules),
-    install_requires=["prettyconf"],
-    password="xpto",  # todo: ensure this is secure if actually needed
+    packages=['app'],
+    package_dir={'app': 'src/app'},
+    # install_requires=['prettyconf'],
+    ext_modules=cythonize(extensions, compiler_directives={'language_level': '3'}),
+    # entry_points={
+    #     'console_scripts': [
+    #         'run = run:start',
+    #         'app = app:run',
+    #         'start = app:start',
+    #     ]
+    # },
+    maintainer=MAINTAINER,
+    verbose=VERBOSE,
+    password='xpto',  # todo, by ChatGPT: ensure this is secure if actually needed
 )
 
-print(f"{PROJECT_NAME} Compile :: Compilation ends. Binaries to be placed in build/app/")
+BUILD_DIR = res.get_cmdline_options().get("build_ext", {}).get("build-lib")
+print(
+    '{} Compile :: Compilation ends. Binar{} placed in {}/.'.format(
+        PROJECT_NAME, 'ies' if not SINGLE_BINARY else 'y', BUILD_DIR,
+    ),
+)

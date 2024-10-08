@@ -1,3 +1,5 @@
+.PHONY: build
+
 SHELL := $(shell type bash | cut -d\  -f3)
 POETRY_PATH := $(shell type poetry | cut -d\  -f3)
 PROJECT_DIR := $(shell realpath .)
@@ -40,24 +42,15 @@ collect-and-publish:
 	python -m "${APP_DIR}"
 
 
-build-dependencies:
-	rm -rf "${BUILD_DIR}/dependencies" && mkdir -p "${BUILD_DIR}/dependencies"
-	poetry show --without=dev | awk '{print $$1}' | sed "s,.*-,," > /tmp/dep-names.txt
-	cd "${VIRTUAL_ENV}"/lib/python*/*packages \
-		&& cat /tmp/dep-names.txt | xargs -I {} find . -name "*{}*" -maxdepth 1 \
-		&& cp -r
-	cd "${VIRTUAL_ENV}"/lib/python*/*packages && \
-		cat /tmp/dep-names.txt | xargs -I {} find . -name "*{}*" -maxdepth 1 > /tmp/dep-files.txt
+build: build-recreate-dir build-compile toss-build-temp
 
-build:
-	@python setup/dotenv-from-toml.py > setup/.env
-	@echo "${PROJECT_NAME} Build :: Call builder"
-	@set -o allexport; source setup/.env; set +o allexport;
-	@echo "${PROJECT_NAME} Build :: Compile App files"
-	@poetry run python setup/compile.py build_ext -j 9 --build-lib build
-	@cp setup/.env build/
-	@find ${SRC_DIR} -type f -name *\.c -delete
-	@rm -rf "build/temp.linux"*
+build-recreate-dir: toss-builds
+	@mkdir "${BUILD_DIR}"
+
+build-compile: toss-src-cache
+	@set -o allexport; source .env; set +o allexport; \
+		poetry run python setup/compile.py build_ext -j 9 --build-lib "${BUILD_DIR}"
+	@python setup/dotenv-from-toml.py > "${BUILD_DIR}/.env"
 
 
 run-kafka-ui:
@@ -71,5 +64,22 @@ run-kafka-ui:
 test-repl:
 	PYTHONPATH=${SRC_DIR} poetry run python
 
-tidy-up:
+
+toss-build-temp:
+	@find src -type f -name "*\.c" -exec rm {} +
+	@rm -rf ${BUILD_DIR}/temp.linux*
+
+toss-src-cache:
+	@find . -type d -name .pytest_cache | xargs rm -rf
+	@find . -type d -name __pycache__ | xargs rm -rf
+
+toss-builds:
+	@rm -rf ${BUILD_DIR}
+
+toss-dist-packages:
+	@rm -fr ${DIST_DIR}
+
+toss-containers:
 	@podman container stop kafka-ui
+
+toss-all: toss-src-cache toss-build-temp toss-builds
