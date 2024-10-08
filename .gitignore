@@ -12,6 +12,7 @@
 build/
 nbbuild/
 dist/
+distro/
 nbdist/
 .nb-gradle/
 
@@ -130,6 +131,7 @@ __pycache__/
 build/
 develop-eggs/
 dist/
+distro/
 downloads/
 eggs/
 .eggs/
