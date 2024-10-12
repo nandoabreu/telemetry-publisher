@@ -24,7 +24,7 @@ env-info:
 	""" | sed "s,: ,:|,;s,^\t,," | column -t -s\|
 
 env-setup:
-	@git init
+# todo: build and pack for different versions - v3.9 compilation does not run on 3.11, etc
 	@[ -f .python-version ] && poetry env use $(shell cat .python-version) >/dev/null || true
 	@poetry install --no-root -v
 	@poetry run pre-commit install
@@ -46,10 +46,12 @@ build-recreate-dir: toss-builds
 	@mkdir "${BUILD_DIR}"
 
 build-compile: toss-src-cache
+# todo: build and pack for different versions - v3.9 compilation does not run on 3.11, etc
 	@set -o allexport; source .env; set +o allexport; \
 		poetry run python setup/compile.py build_ext -j 9 --build-lib "${BUILD_DIR}"
 
 distro-pack:
+# todo: build and pack for different versions - v3.9 compilation does not run on 3.11, etc
 	@rm -rf "${DISTRO_DIR}/${PROJECT_NAME}" && mkdir -p "${DISTRO_DIR}" && \
 		cp -pr "${BUILD_DIR}" "${DISTRO_DIR}/${PROJECT_NAME}"
 	@poetry export --without-hashes --only main | \
