@@ -191,7 +191,7 @@ class Collector:
         for line in res['stdout'][2:]:
             device, info = line.split(':')
             device = device.strip()
-            if device in ('lo', 'podman', 'podman0', 'podman1', 'podman2', 'veth0'):
+            if device in ('lo', 'podman', 'podman0', 'docker', 'docker0', 'veth0'):
                 continue
 
             info = sub(r' +', ' ', info).split()
