@@ -46,6 +46,7 @@ class Collector:
             self._probe_lm_sensors: 'sensors',
             self._fetch_thermal_zones: 'thermal_zones',
             self._probe_nvidia_gpu: 'nvidia',
+            self._fetch_networks: 'net',
         }.items():
             res = None
 
@@ -167,6 +168,38 @@ class Collector:
 
         res = {'gpu': data} if data else {}
         return res
+
+    def _fetch_networks(self) -> dict:
+        """Update self._last_net_data property with data from network devices"""
+        self._log_debug('Start network devices fetch')
+
+        cmd = f'{CAT_CMD_PATH} /proc/net/dev'
+
+        try:
+            res = self._run_os_command(cmd)
+            self._log_debug(f'Command returned: {res}')  # expected: ['20000', '47050', '61050',]
+
+            if not res['stdout'] or len(res['stdout']) < 3:
+                raise OSError('no network device data')
+
+        except OSError as e:
+            if 'not found' in str(e):
+                e = 'update variable CAT_CMD_PATH in the env.toml file and then check .env'
+            raise OSError(f'Could not fetch network devices: hardware may not report via /proc\n{e}')
+
+        data = {}
+        for line in res['stdout'][2:]:
+            device, info = line.split(':')
+            device = device.strip()
+            if device in ('lo', 'podman', 'podman0', 'podman1', 'podman2', 'veth0'):
+                continue
+
+            info = sub(r' +', ' ', info).split()
+            mbits_in, mbits_out = int(info[0]) * 8 / 10 ** 6, int(info[8]) * 8 / 10 ** 6
+            data[device] = {'in': round(mbits_in, 1), 'out': round(mbits_out, 1)}
+
+        self._log_debug(f'Fetched data: {data}')
+        return data
 
     def _identify(self):
         self._log_debug('Start device identification')
