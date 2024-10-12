@@ -53,9 +53,10 @@ distro-pack:
 	@rm -rf "${DISTRO_DIR}/${PROJECT_NAME}" && mkdir -p "${DISTRO_DIR}" && \
 		cp -pr "${BUILD_DIR}" "${DISTRO_DIR}/${PROJECT_NAME}"
 	@poetry export --without-hashes --only main | \
-		pip install -q --target="${BUILD_DIR}/dependencies" -r /dev/stdin
-	@mkdir -p "${DISTRO_DIR}" && rm -f "${DISTRO_DIR}/${PROJECT_NAME}" && \
-		mv "${BUILD_DIR}" "${DISTRO_DIR}/${PROJECT_NAME}"
+		pip install -q --upgrade --target="${DISTRO_DIR}/${PROJECT_NAME}/dependencies" -r /dev/stdin
+	@cp -f src/app/__main__.py "${DISTRO_DIR}/${PROJECT_NAME}/app/"
+	@cp -f setup/run.bash "${DISTRO_DIR}/${PROJECT_NAME}/run"
+	@python setup/dotenv-from-toml.py > "${DISTRO_DIR}/${PROJECT_NAME}/.env"
 	@cd "${DISTRO_DIR}" && tar -cpf "${PROJECT_NAME}.tar" "${PROJECT_NAME}"
 
 
@@ -83,7 +84,7 @@ toss-builds:
 	@rm -rf ${BUILD_DIR}
 
 toss-dist-packages:
-	@rm -fr ${DIST_DIR}
+	@rm -fr ${DISTRO_DIR}
 
 toss-containers:
 	@podman container stop kafka-ui
