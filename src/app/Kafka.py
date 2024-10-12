@@ -45,10 +45,10 @@ class Producer:
         self.__kafka.flush(timeout=3)
         self.log_debug(f'Streamed: {self._counter} messages')
 
-    def __report(self, error: str, msg: str):
+    def __report(self, error: str = None, msg: object = None):
         if error is not None:
             self.log_debug(f'Message not delivered: {error}')
-        else:
+        elif msg:
             self.log_debug(f"Delivered to {msg.topic()!r} at part. #{msg.partition()}, offset {msg.offset()}")
 
     def log_debug(self, msg: str):
