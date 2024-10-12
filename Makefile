@@ -36,8 +36,8 @@ test-unit:
 test-unit-coverage:
 	@PYTHONPATH=${SRC_DIR} poetry run python -m pytest tests/ --cov --cov-branch --cov-report term-missing
 
-collect-and-publish:
-	@bash setup/collect-and-publish.bash
+run:
+	@PYTHONPATH=${SRC_DIR} poetry run python -m app
 
 
 build: build-recreate-dir build-compile toss-build-temp
