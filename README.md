@@ -2,9 +2,7 @@
 
 Telemetry publisher to Apache Kafka
 
-This app can query telemetry against the local host.
-It is designed to run locally, sending local data to a remote broker.
-
+This app queries telemetry data from Linux-based hosts and publish them to a Kafka broker.
 
 ## Requirements
 
