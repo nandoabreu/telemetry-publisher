@@ -4,6 +4,7 @@ This module uses Cython to compile Python v3 source codes into C binaries
 The C binaries compiled by Cython can be imported as any other Python module
 """
 from Cython.Build import cythonize
+from Cython.Distutils import build_ext
 from setuptools import Extension, setup
 from glob import iglob
 from os import environ
@@ -27,7 +28,7 @@ print(f'{PROJECT_NAME} Compile :: Prepare source files')
 modules = list(set([f for f in iglob('src/**/*.py', recursive=True) if '/__' not in f]))
 extensions = []
 
-if SINGLE_BINARY:  # todo: this works, but atm the App does not start
+if SINGLE_BINARY:  # todo: compilation works, but not the App, atm
     extension = Extension('app', modules)
     extensions.append(extension)
 
@@ -45,17 +46,8 @@ res = setup(
     description=PROJECT_DESCRIPTION,
     long_description=PROJECT_DESCRIPTION,
     version=APP_VERSION,
-    packages=['app'],
-    package_dir={'app': 'src/app'},
-    # install_requires=['prettyconf'],
+    cmdclass={'build_ext': build_ext},
     ext_modules=cythonize(extensions, compiler_directives={'language_level': '3'}),
-    # entry_points={
-    #     'console_scripts': [
-    #         'run = run:start',
-    #         'app = app:run',
-    #         'start = app:start',
-    #     ]
-    # },
     maintainer=MAINTAINER,
     verbose=VERBOSE,
     password='xpto',  # todo, by ChatGPT: ensure this is secure if actually needed

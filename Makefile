@@ -48,10 +48,10 @@ build-recreate-dir: toss-builds
 build-compile: toss-src-cache
 	@set -o allexport; source .env; set +o allexport; \
 		poetry run python setup/compile.py build_ext -j 9 --build-lib "${BUILD_DIR}"
-	@cp -f src/app/__main__.py "${BUILD_DIR}/app/"
-	@python setup/dotenv-from-toml.py > "${BUILD_DIR}/.env"
 
 distro-pack:
+	@rm -rf "${DISTRO_DIR}/${PROJECT_NAME}" && mkdir -p "${DISTRO_DIR}" && \
+		cp -pr "${BUILD_DIR}" "${DISTRO_DIR}/${PROJECT_NAME}"
 	@poetry export --without-hashes --only main | \
 		pip install -q --target="${BUILD_DIR}/dependencies" -r /dev/stdin
 	@mkdir -p "${DISTRO_DIR}" && rm -f "${DISTRO_DIR}/${PROJECT_NAME}" && \
