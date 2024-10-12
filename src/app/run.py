@@ -1,7 +1,7 @@
 """Application main module"""
 from datetime import datetime as _dt
 from random import randint
-from sys import exit
+from sys import exit, version
 
 from .config import (
     APP_NAME,
@@ -20,7 +20,9 @@ log = obj.logger
 
 def start():
     """Application runner"""
-    log.info("{s}- Start {a} v{v} {s}-".format(s="-*" * 5, a=APP_NAME, v=APP_VERSION))
+    log.info('{s}- Start {a} v{v} {s}-'.format(s='-*' * 5, a=APP_NAME, v=APP_VERSION))
+    log.info('Running over Python v{}'.format(version.replace('\n', '')))
+    # todo: log OS info
 
     try:
         collector = Collector(logger=log)
