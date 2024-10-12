@@ -1,4 +1,6 @@
 """Application main file"""
 from .run import start
 
-start()
+
+if __name__ == '__main__':
+    start()
