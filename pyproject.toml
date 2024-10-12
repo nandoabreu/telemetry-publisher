@@ -12,7 +12,7 @@ python = "^3.9"
 tomli = { version = "^2.0.2", python = "<3.11" }
 prettyconf = "^2.2.1"
 python-dateutil = "^2.9.0.post0"
-confluent-kafka = "^2.5.3"
+confluent-kafka = "^2.6.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
