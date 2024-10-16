@@ -5,6 +5,8 @@ Description
 todo: test `hwinfo --sensors`
 """
 from copy import deepcopy
+from psutil import disk_partitions
+from shutil import disk_usage
 from subprocess import run
 from re import sub
 from time import time
@@ -98,19 +100,19 @@ class Collector:
             data[key] = float(val)
         self._log_debug(f'Parsed data: {data}')
 
-        res = {}
         fetch = {
             'cpu': ('Package id 0', 'Tctl', 'CPU', 'coretemp'),
             'gpu': ('GPU', 'GPU temp', 'edge'),
         }
 
-        for unit, keys in fetch.items():
+        res = {}
+        for data_point, keys in fetch.items():
             for key in keys:
                 if key in data:
-                    if unit not in res:
-                        res[unit] = {}
+                    if data_point not in res:
+                        res[data_point] = {}
 
-                    res[unit][key] = data[key]
+                    res[data_point][key] = data[key]
 
         return res
 
@@ -200,6 +202,32 @@ class Collector:
 
         self._log_debug(f'Fetched data: {data}')
         return data
+
+    def _shutil_storage_use(self) -> dict:
+        """Fetch data from mounted partitions
+
+        Returns:
+            (dict): Having values in Mebibytes (MiB)
+        """
+        data = {}
+
+        for partition in disk_partitions():
+            data[partition.mountpoint] = {}
+
+            usage = disk_usage(partition.mountpoint)
+            self._log_debug(f'shutil returned for {partition.mountpoint}: {usage}')
+
+            for k in dir(usage):
+                if k.startswith('_') or callable(usage.__getattribute__(k)):
+                    continue
+
+                val_bytes = usage.__getattribute__(k)
+                mibytes = val_bytes / 1024 ** 2
+                data[partition.mountpoint].update({k: round(mibytes, 1)})
+
+        self._log_debug(f'Fetched data: {data}')
+        res = {'storage': data} if data else {}
+        return res
 
     def _identify(self):
         self._log_debug('Start device identification')
