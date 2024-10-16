@@ -172,7 +172,11 @@ class Collector:
         return res
 
     def _fetch_networks(self) -> dict:
-        """Update self._last_net_data property with data from network devices"""
+        """Fetch data from network devices
+
+        Returns:
+            (dict): Having values as Megabits (Mb)
+        """
         self._log_debug('Start network devices fetch')
 
         cmd = f'{CAT_CMD_PATH} /proc/net/dev'
@@ -197,11 +201,12 @@ class Collector:
                 continue
 
             info = sub(r' +', ' ', info).split()
-            mbits_in, mbits_out = int(info[0]) * 8 / 10 ** 6, int(info[8]) * 8 / 10 ** 6
+            mbits_in, mbits_out = (int(info[0]) * 8) / 1000 ** 2, (int(info[8]) * 8) / 1000 ** 2
             data[device] = {'in': round(mbits_in, 1), 'out': round(mbits_out, 1)}
 
         self._log_debug(f'Fetched data: {data}')
-        return data
+        res = {'net': data} if data else {}
+        return res
 
     def _shutil_storage_use(self) -> dict:
         """Fetch data from mounted partitions
