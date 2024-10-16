@@ -44,12 +44,15 @@ class Collector:
 
         self._last_probe = {'epoch': int(time())}
 
-        for method, label in {
-            self._probe_lm_sensors: 'sensors',
-            self._fetch_thermal_zones: 'thermal_zones',
-            self._probe_nvidia_gpu: 'nvidia',
-            self._fetch_networks: 'net',
+        for method, config in {
+            self._probe_lm_sensors: {'label': 'sensors', 'append_label': True},
+            self._fetch_thermal_zones: {'label': 'thermal_zones', 'append_label': True},
+            self._probe_nvidia_gpu: {'label': 'nvidia', 'append_label': True},
+            self._fetch_networks: {'label': 'procfs', 'append_label': False},
+            self._shutil_storage_use: {'label': 'shutil', 'append_label': False},
+            # Default config is to not append the label in net or storage, because both have single data sources
         }.items():
+            label, append_label = config.values()
             res = None
 
             try:
@@ -60,14 +63,14 @@ class Collector:
                     if len(err) > 10:
                         self._log_debug(err)
 
-            if res:
-                self._log_debug(f'{label} returned: {res}')
+            for data_point, values in res.items():
+                if data_point not in self._last_probe:
+                    self._last_probe[data_point] = {}
 
-                for unit, data in res.items():
-                    if unit not in self._last_probe:
-                        self._last_probe[unit] = {}
-
-                    self._last_probe[unit][label] = data
+                if append_label:
+                    self._last_probe[data_point][label] = values
+                else:
+                    self._last_probe[data_point] = values
 
         return self._last_probe
 
@@ -98,6 +101,7 @@ class Collector:
             key = chunks[0].strip()
             val = sub(r'[^0-9.+-]', '', chunks[1].split()[0])
             data[key] = float(val)
+
         self._log_debug(f'Parsed data: {data}')
 
         fetch = {
