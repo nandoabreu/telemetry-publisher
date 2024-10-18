@@ -23,3 +23,33 @@ At least one of the following is required to return data.
 #### CPU thermal zones
 
 Files in `/sys/class/thermal/thermal_zone*` are queried. Some distro report in this structure.
+
+
+## Installation
+
+### Source install
+
+The simplest way to install this app is to clone the repository and run the following Makefile command:
+
+```shell
+install-source
+```
+
+### Compile and distribute
+
+To build and pack binaries to run this app, you must set the environment:
+
+```shell
+make env-setup
+```
+
+> Note: [Poetry](https://python-poetry.org/) is the dev env requirement for this project.
+
+The following commands should create the binaries and pack them to distribute:
+
+```shell
+make build distro-pack
+```
+
+> Note: currently the dev env must be loaded with the same Python version than the target device.
+> Also, the devices must have one or more [requirements](#os-packages) installed to run the app.
