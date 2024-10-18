@@ -98,7 +98,7 @@ repos:
         language: system
         entry: >
           bash -c 'env PYTHONPATH=$VIRTUAL_ENV/lib/python$(cat .python-version)/site-packages:src
-          python3 -m pytest tests/unit --cov=app --cov-branch --cov-report term-missing'
+          python3 -m pytest tests/unit --cov=app --cov-branch --cov-report term-missing --cache-clear'
         types: [ python ]
         pass_filenames: false
         always_run: true
