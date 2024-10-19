@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
 
-PYTHON_VERSION=$(python3 -V | sed "s,.* \(3\.[0-9]\+\)\..*,\1,")
-[ -z "$VIRTUAL_ENV" ] && VIRTUAL_ENV=.venv/lib/python$PYTHON_VERSION/site-packages
-[ ! -d "$VIRTUAL_ENV" ] && VIRTUAL_ENV=dependencies
+VIRTUAL_ENV=${VIRTUAL_ENV:-$(poetry env info -p 2>/dev/null || echo .venv)}
+
+if [ -d "$VIRTUAL_ENV" ]; then
+  PACKAGES_DIR="$(find "$VIRTUAL_ENV" -type d -name site-packages | tail -1)"
+  DEPENDENCIES="$(realpath "$PACKAGES_DIR")"
+  PYTHON_BIN="$VIRTUAL_ENV/bin/python"
+
+else
+  DEPENDENCIES=dependencies
+  PYTHON_BIN=$(which python3)
+
+fi
 
 set -x
-PYTHONPATH="$VIRTUAL_ENV:src" python -m app
+eval PYTHONPATH="$DEPENDENCIES:src" "$PYTHON_BIN" -m app
