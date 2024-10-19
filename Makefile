@@ -68,7 +68,8 @@ install-source:
 		grep -v '^python ' | sed 's, = ".\([0-9.].*[0-9]\)"$$,==\1,' | \
 		sed 's| =.*version = ".\?\([0-9.].*[0-9]\)", python = "\(.\)\([0-9.]\+\)" }$$|==\1 ; python_version \2 "\3"|' \
 		> requirements.parsed.txt
-	@python3 -m venv .venv && .venv/bin/python -m pip install -q -r requirements.parsed.txt
+	@python3 -m venv .venv && .venv/bin/python -m pip install -q -r requirements.parsed.txt && \
+		rm -f requirements.parsed.txt
 	@.venv/bin/python setup/dotenv-from-toml.py > .env
 
 
