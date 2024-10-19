@@ -1,18 +1,19 @@
 .PHONY: build
 
 SHELL := $(shell type bash | cut -d\  -f3)
-POETRY_PATH := $(shell type poetry | cut -d\  -f3)
+POETRY_PATH := $(shell type poetry 2>/dev/null | cut -d\  -f3)
 PROJECT_DIR := $(shell realpath .)
-HOST_IP := $(shell ip -o -4 address | grep -v 127.0.0 | head -1 | awk '{print $$4}' | cut -d/ -f1)
+HOST_IP := $(shell ip -o -4 address 2>/dev/null | grep -v 127.0.0 | head -1 | awk '{print $$4}' | cut -d/ -f1)
 
-VIRTUAL_ENV ?= $(shell poetry env info -p)
+VIRTUAL_ENV ?= $(shell poetry env info -p 2>/dev/null)
 PYTHON_VERSION := $(shell cat .python-version 2>/dev/null || python3 -V | sed "s,.* \(3\.[0-9]\+\)\..*,\1,")
 
 BUILD_DIR ?= build
 
+ifneq ($(shell echo "${MAKECMDGOALS}" | grep -q -E '^(env-setup|install-source)$$' && echo noenv || echo isdev), noenv)
 $(shell eval run=dev python setup/dotenv-from-toml.py > .env)
 include .env
-
+endif
 
 env-info:
 	@echo -e """\
@@ -55,11 +56,20 @@ distro-pack:
 	@rm -rf "${DISTRO_DIR}/${PROJECT_NAME}" && mkdir -p "${DISTRO_DIR}" && \
 		cp -pr "${BUILD_DIR}" "${DISTRO_DIR}/${PROJECT_NAME}"
 	@poetry export --without-hashes --only main | \
-		pip install -q --upgrade --target="${DISTRO_DIR}/${PROJECT_NAME}/dependencies" -r /dev/stdin
+		pip install -q --upgrade -r /dev/stdin --target="${DISTRO_DIR}/${PROJECT_NAME}/dependencies"
 	@cp -f src/app/__main__.py "${DISTRO_DIR}/${PROJECT_NAME}/app/"
 	@cp -f setup/run.bash "${DISTRO_DIR}/${PROJECT_NAME}/run"
 	@python setup/dotenv-from-toml.py > "${DISTRO_DIR}/${PROJECT_NAME}/.env"
 	@cd "${DISTRO_DIR}" && tar -cpf "${PROJECT_NAME}.tar" "${PROJECT_NAME}"
+
+install-source:
+	@cat pyproject.toml | \
+		awk '/^\[tool.poetry.dependencies\]/ {flag=1; next} /^\[/{flag=0} flag' | \
+		grep -v '^python ' | sed 's, = ".\([0-9.].*[0-9]\)"$$,==\1,' | \
+		sed 's| =.*version = ".\?\([0-9.].*[0-9]\)", python = "\(.\)\([0-9.]\+\)" }$$|==\1 ; python_version \2 "\3"|' \
+		> requirements.parsed.txt
+	@python3 -m venv .venv && .venv/bin/python -m pip install -q -r requirements.parsed.txt
+	@.venv/bin/python setup/dotenv-from-toml.py > .env
 
 
 run-kafka-ui:
