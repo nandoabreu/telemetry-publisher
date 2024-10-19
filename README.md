@@ -32,8 +32,10 @@ Files in `/sys/class/thermal/thermal_zone*` are queried. Some distro report in t
 The simplest way to install this app is to clone the repository and run the following Makefile command:
 
 ```shell
-install-source
+make install-source
 ```
+
+> Note: To run Makefile targets, `make` must be installed in the system.
 
 ### Compile and distribute
 
@@ -44,6 +46,8 @@ make env-setup
 ```
 
 > Note: [Poetry](https://python-poetry.org/) is the dev env requirement for this project.
+> If Poetry is not of your interest, use the [Source install](#source-install)
+> to set a virtual environment and install dependencies.
 
 The following commands should create the binaries and pack them to distribute:
 

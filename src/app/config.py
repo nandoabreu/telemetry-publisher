@@ -9,10 +9,10 @@ This module manages environment variables and fallback values:
 
 *** `.env` should be deployed to production. ***
 
-Regarding prettyconf, the dependency responsible for fetching environment variables, the precedence order is:
+Regarding decouple, the dependency responsible for fetching environment variables, the precedence order is:
 - command-line variable > .env file > fallback value (if set)
 """
-from prettyconf import config
+from decouple import config
 from pathlib import Path
 from tempfile import gettempdir
 
