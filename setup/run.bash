@@ -13,5 +13,4 @@ else
 
 fi
 
-set -x
 eval PYTHONPATH="$DEPENDENCIES:src" "$PYTHON_BIN" -m app
