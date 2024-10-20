@@ -51,6 +51,9 @@ def start():
     finally:
         log.debug(f"To stream: {data}")
 
+        if len(data) == 2:  # {'device': _, 'collected_at': _}
+            log.warning('No data from Collector - Increase log level and see what can be done.')
+
     producer = Producer(brokers=KAFKA_BROKERS, logger=log)
     producer.stream(messages=[data], topic=KAFKA_TOPIC, key=collector.device)
     log.info("Published data points for cid #{}: [{}]".format(cid, ', '.join(data.keys())))
