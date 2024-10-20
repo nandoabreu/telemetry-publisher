@@ -13,4 +13,5 @@ else
 
 fi
 
+[ ! -e .env ] && eval PYTHONPATH="$DEPENDENCIES:src" "$PYTHON_BIN" setup/dotenv-from-toml.py > .env
 eval PYTHONPATH="$DEPENDENCIES:src" "$PYTHON_BIN" -m app

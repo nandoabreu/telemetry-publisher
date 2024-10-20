@@ -59,6 +59,15 @@ make build distro-pack
 > Also, the devices must have one or more [requirements](#os-packages) installed to run the app.
 
 
+## Setup Kafka info
+
+Your Kafka server must be set in the [env.toml](env.toml) file after the app is installed.
+Update it remove the .env file, so that [setup/run.bash](setup/run.bash) creates a new .env on the next run.
+
+> Note: it's possible and in some cases better to update the .env directly,
+> if already created by a `make` or a `bash setup/run.bash` call.
+
+
 ## Run telemetry-publisher
 
 Once the app is installed [and a .env created], the following command will run it:
