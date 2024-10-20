@@ -88,7 +88,11 @@ class Logger(metaclass=Singleton):
             handler.setFormatter(LogHook(handler.formatter._fmt))
 
         log_int = logging.getLevelName(self.level)
-        self.logger.log(log_int + 10, 'Logs will be stored in the UTC timezone, in {}'.format(log_filepath))
+        self.logger.log(
+            log_int + 10, 'Logs{} will be stored in UTC timezone at {}'.format(
+                f' for cid #{cid}' if cid else '', log_filepath,
+            ),
+        )
         self.logger.log(10, 'I will rotate {} log files, at {} bytes'.format(rotated_files, rotation_bytes))
 
     @property

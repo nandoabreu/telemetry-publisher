@@ -14,7 +14,8 @@ from .Logger import Logger
 from .Collector import Collector
 from .Kafka import Producer
 
-obj = Logger(cid=str(randint(1000, 9999)))
+cid = str(randint(1000, 9999))
+obj = Logger(cid=cid)
 log = obj.logger
 
 
@@ -52,7 +53,7 @@ def start():
 
     producer = Producer(brokers=KAFKA_BROKERS, logger=log)
     producer.stream(messages=[data], topic=KAFKA_TOPIC, key=collector.device)
-    log.info("Published")
+    log.info("Published data points for cid #{}: [{}]".format(cid, ', '.join(data.keys())))
 
 
 if __name__ == "__main__":
