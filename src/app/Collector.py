@@ -225,14 +225,14 @@ class Collector:
         data = {}
 
         for partition in disk_partitions():
+            if partition.mountpoint.startswith('/snap'):
+                self._log_debug(f'Skip shutil data for {partition.mountpoint}')
+                continue
+
             data[partition.mountpoint] = {}
 
             usage = disk_usage(partition.mountpoint)
             self._log_debug(f'shutil returned for {partition.mountpoint}: {usage}')
-
-            if partition.mountpoint.startswith('/snap'):
-                self._log_debug(f'Skip shutil data for {partition.mountpoint}')
-                continue
 
             for k in dir(usage):
                 if k.startswith('_') or callable(usage.__getattribute__(k)):
