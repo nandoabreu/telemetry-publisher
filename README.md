@@ -57,3 +57,18 @@ make build distro-pack
 
 > Note: currently the dev env must be loaded with the same Python version than the target device.
 > Also, the devices must have one or more [requirements](#os-packages) installed to run the app.
+
+
+## Run telemetry-publisher
+
+Once the app is installed [and a .env created], the following command will run it:
+
+```shell
+bash setup/run.bash
+```
+
+This command was tested as a call from a crontab:
+
+```shell
+* * * * * cd /<abs path to telemetry-publisher> && bash setup/run.bash
+```
