@@ -5,7 +5,7 @@ POETRY_PATH := $(shell type poetry 2>/dev/null | cut -d\  -f3)
 PROJECT_DIR := $(shell realpath .)
 HOST_IP := $(shell ip -o -4 address 2>/dev/null | grep -v 127.0.0 | head -1 | awk '{print $$4}' | cut -d/ -f1)
 
-VIRTUAL_ENV ?= $(shell poetry env info -p 2>/dev/null)
+VIRTUAL_ENV ?= $(shell poetry env info -p 2>/dev/null || find . -type d -name '*venv' -exec realpath {} \;)
 PYTHON_VERSION := $(shell cat .python-version 2>/dev/null || python3 -V | sed "s,.* \(3\.[0-9]\+\)\..*,\1,")
 
 BUILD_DIR ?= build
@@ -20,7 +20,7 @@ env-info:
 	Application: ${APP_NAME} v${APP_VERSION}\n\
 	Project: ${PROJECT_NAME} (${PROJECT_DESCRIPTION})\n\
 	Source files: ${PROJECT_DIR}/${SRC_DIR}\n\
-	Virtual env: $(shell poetry env info -p)\n\
+	Virtual env: ${VIRTUAL_ENV}\n\
 	Current Python: ${PYTHON_VERSION}\n\
 	""" | sed "s,: ,:|,;s,^\t,," | column -t -s\|
 
