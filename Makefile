@@ -10,7 +10,7 @@ PYTHON_VERSION := $(shell cat .python-version 2>/dev/null || python3 -V | sed "s
 
 BUILD_DIR ?= build
 
-ifneq ($(shell echo "${MAKECMDGOALS}" | grep -q -E '^(env-setup|install-source|run)$$' && echo noenv || echo isdev), noenv)
+ifneq ($(shell echo "${MAKECMDGOALS}" | grep -q -E '^(env-setup|install-source)$$' && echo noenv || echo isdev), noenv)
 $(shell eval run=dev python setup/dotenv-from-toml.py > .env)
 include .env
 endif
