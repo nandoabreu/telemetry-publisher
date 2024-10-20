@@ -63,6 +63,10 @@ class Collector:
                     if len(err) > 10:
                         self._log_debug(err)
 
+            if not res:
+                self._log_debug(f'No data from {label}')
+                continue
+
             for data_point, values in res.items():
                 if data_point not in self._last_probe:
                     self._last_probe[data_point] = {}
