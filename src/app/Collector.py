@@ -44,6 +44,7 @@ class Collector:
 
         self._last_probe = {'epoch': int(time())}
 
+        checkpoint = time()
         for method, config in {
             self._probe_lm_sensors: {'label': 'sensors', 'append_label': True},
             self._fetch_thermal_zones: {'label': 'thermal_zones', 'append_label': True},
@@ -76,6 +77,7 @@ class Collector:
                 else:
                     self._last_probe[data_point] = values
 
+        self._log_debug('Probe took {:.3f} seconds'.format(time() - checkpoint))
         return self._last_probe
 
     def _probe_lm_sensors(self) -> dict:
