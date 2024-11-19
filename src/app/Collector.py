@@ -5,7 +5,7 @@ Description
 todo: test `hwinfo --sensors`
 """
 from copy import deepcopy
-from psutil import disk_partitions
+from psutil import cpu_percent, virtual_memory, disk_partitions
 from shutil import disk_usage
 from subprocess import run
 from re import sub
@@ -246,6 +246,30 @@ class Collector:
 
         self._log_debug(f'Fetched data: {data}')
         res = {'storage': data} if data else {}
+        return res
+
+    def _psutil_cpu_general_usage(self) -> dict:
+        """Fetch data from CPU
+
+        Returns:
+            (dict): Having one value in load/usage percentage
+        """
+        usage = cpu_percent(interval=1)
+        self._log_debug(f'putil returned for CPU usage: {usage}')
+
+        res = {'cpu': usage}
+        return res
+
+    def _psutil_memory_usage(self) -> dict:
+        """Fetch data from RAM
+
+        Returns:
+            (dict): Having one value in load/usage percentage
+        """
+        usage = virtual_memory().percent
+        self._log_debug(f'putil returned for RAM usage: {usage}')
+
+        res = {'ram': usage}
         return res
 
     def _identify(self):
