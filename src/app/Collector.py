@@ -99,7 +99,7 @@ class Collector:
         except OSError as e:
             if 'not found' in str(e):
                 e = 'update variables SENSORS_CMD_PATH and GREP_CMD_PATH in the env.toml file and then check .env'
-            raise OSError(f'Could not probe sensors: install lm_sensors, if possible\n{e}')
+            raise OSError(f'Could not probe sensors: install lm-sensors, if possible\n{e}')
 
         data = {}
         for line in res['stdout']:
@@ -173,7 +173,7 @@ class Collector:
         except OSError as e:
             if 'not found' in str(e):
                 e = 'update variable NVIDIA_CMD_PATH (nvidia-smi) in the env.toml file and then check .env'
-            raise OSError(f'Could not probe sensors: install lm_sensors, if possible\n{e}')
+            raise OSError(f'Could not probe nvidia: install nvidia-smi, if compatible\n{e}')
 
         data = None if len(res['stdout']) < 2 else float(res['stdout'][1])
         self._log_debug(f'Fetched data: {data}')
