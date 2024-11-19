@@ -4,6 +4,7 @@ Description
 
 todo: test `hwinfo --sensors`
 """
+from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from psutil import cpu_percent, virtual_memory, disk_partitions
 from shutil import disk_usage
@@ -45,37 +46,32 @@ class Collector:
         self._last_probe = {'epoch': int(time())}
 
         checkpoint = time()
-        for method, config in {
-            self._probe_lm_sensors: {'label': 'sensors', 'append_label': True},
-            self._fetch_thermal_zones: {'label': 'thermal_zones', 'append_label': True},
-            self._probe_nvidia_gpu: {'label': 'nvidia', 'append_label': True},
-            self._fetch_networks: {'label': 'procfs', 'append_label': False},
-            self._shutil_storage_use: {'label': 'shutil', 'append_label': False},
-            # Default config is to not append the label in net or storage, because both have single data sources
-        }.items():
-            label, append_label = config.values()
-            res = None
+        with ThreadPoolExecutor() as thread:
+            for future, config in {
+                thread.submit(self._probe_lm_sensors): {'label': 'sensors', 'append_label': True},
+                thread.submit(self._fetch_thermal_zones): {'label': 'thermal_zones', 'append_label': True},
+                thread.submit(self._probe_nvidia_gpu): {'label': 'nvidia', 'append_label': True},
+                thread.submit(self._fetch_networks): {'label': 'procfs', 'append_label': False},
+                thread.submit(self._shutil_storage_use): {'label': 'shutil', 'append_label': False},
+                thread.submit(self._psutil_cpu_general_usage): {'label': 'usage', 'append_label': True},
+                thread.submit(self._psutil_memory_usage): {'label': 'usage', 'append_label': True},
+                # Default config is to not append the label in net or storage, because both have single data sources
+            }.items():
+                label, append_label = config.values()
+                res = future.result()  # Get the return value from the method
 
-            try:
-                res = method and method()
+                if not res:
+                    self._log_debug(f'No data from {label}')
+                    continue
 
-            except OSError as e:
-                for err in str(e).split('\n'):
-                    if len(err) > 10:
-                        self._log_debug(err)
+                for data_point, values in res.items():
+                    if data_point not in self._last_probe:
+                        self._last_probe[data_point] = {}
 
-            if not res:
-                self._log_debug(f'No data from {label}')
-                continue
-
-            for data_point, values in res.items():
-                if data_point not in self._last_probe:
-                    self._last_probe[data_point] = {}
-
-                if append_label:
-                    self._last_probe[data_point][label] = values
-                else:
-                    self._last_probe[data_point] = values
+                    if append_label:
+                        self._last_probe[data_point][label] = values
+                    else:
+                        self._last_probe[data_point] = values
 
         self._log_debug('Probe took {:.3f} seconds'.format(time() - checkpoint))
         return self._last_probe
