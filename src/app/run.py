@@ -38,9 +38,11 @@ def start():
     data = {}
 
     try:
+        now = _dt.utcnow()
         data = {
+            'epoch': now.timestamp(),
             'device': collector.device,
-            'collected_at': _dt.utcnow().strftime("%F %T +00:00"),
+            'collected_at': now.strftime("%F %T +00:00"),
         }
         data.update({k: v for k, v in collector.data.items() if k != 'epoch'})
 
@@ -49,7 +51,7 @@ def start():
             log.debug(err)
 
     finally:
-        log.debug(f"To stream: {data}")
+        log.debug(f"Send to stream: {data}")
 
         if len(data) == 2:  # {'device': _, 'collected_at': _}
             log.warning('No data from Collector - Increase log level and see what can be done.')
