@@ -36,11 +36,11 @@ class Collector:
     @property
     def data(self) -> dict:
         """Retrieve all available CPU and GPU temperatures"""
-        self._log_debug('Start data retrieval')
+        self._log('Start data retrieval')
 
         retrieval_threshold_sec: int = 20
         if (time() - self._last_probe['epoch']) < retrieval_threshold_sec:
-            self._log_debug(f'Return recent data (queried less than {retrieval_threshold_sec} seconds ago)')
+            self._log(f'Return recent data (queried less than {retrieval_threshold_sec} seconds ago)')
             return self._last_probe
 
         self._last_probe = {'epoch': int(time())}
@@ -61,7 +61,7 @@ class Collector:
                 res = future.result()  # Get the return value from the method
 
                 if not res:
-                    self._log_debug(f'No data from {label}')
+                    self._log(f'No data from {label}')
                     continue
 
                 for data_point, values in res.items():
@@ -73,12 +73,12 @@ class Collector:
                     else:
                         self._last_probe[data_point] = values
 
-        self._log_debug('Probe took {:.3f} seconds'.format(time() - checkpoint))
+        self._log('Probe took {:.3f} seconds'.format(time() - checkpoint))
         return self._last_probe
 
     def _probe_lm_sensors(self) -> dict:
         """Update self._last_cpu_data property with data from the sensors command"""
-        self._log_debug('Start sensors probe')
+        self._log('Start sensors probe')
 
         filters = ('Package', 'Tctl', 'CPU', 'GPU', 'edge')
         cmd = '{s} | {g} -e {f} | {g} °C'.format(
@@ -87,7 +87,7 @@ class Collector:
 
         try:
             res = self._run_os_command(cmd)
-            self._log_debug(f'Command returned: {res}')  # expected: ['Package id 0:      +70.0°C ... ']
+            self._log(f'Command returned: {res}')  # expected: ['Package id 0:      +70.0°C ... ']
 
             if not res['stdout']:
                 raise OSError('no sensors data')
@@ -104,7 +104,7 @@ class Collector:
             val = sub(r'[^0-9.+-]', '', chunks[1].split()[0])
             data[key] = float(val)
 
-        self._log_debug(f'Parsed data: {data}')
+        self._log(f'Parsed data: {data}')
 
         fetch = {
             'cpu': ('Package id 0', 'Tctl', 'CPU', 'coretemp'),
@@ -127,13 +127,13 @@ class Collector:
 
         Some hardware handle temperature in files that can be catted.
         """
-        self._log_debug('Start thermal zone fetch')
+        self._log('Start thermal zone fetch')
 
         cmd = f'{CAT_CMD_PATH} /sys/class/thermal/thermal_zone*/temp'
 
         try:
             res = self._run_os_command(cmd)
-            self._log_debug(f'Command returned: {res}')  # expected: ['20000', '47050', '61050',]
+            self._log(f'Command returned: {res}')  # expected: ['20000', '47050', '61050',]
 
             if not res['stdout']:
                 raise OSError('no thermal zone data')
@@ -144,7 +144,7 @@ class Collector:
             raise OSError(f'Could not fetch thermal zones: hardware may not report thermal zones\n{e}')
 
         data = [round(float(t) / 1000, 3) for t in res['stdout']]
-        self._log_debug(f'Fetched data: {data}')
+        self._log(f'Fetched data: {data}')
 
         res = {'cpu': data} if data else {}
         return res
@@ -155,13 +155,13 @@ class Collector:
         Returns:
             (float): a single value returned from the nvidia-smi call
         """
-        self._log_debug('Start nvidia probe')
+        self._log('Start nvidia probe')
 
         cmd = f'{NVIDIA_CMD_PATH} --query-gpu=temperature.gpu --format=csv'
 
         try:
             res = self._run_os_command(cmd)
-            self._log_debug(f'Command returned: {res}')  # expected: ['temperature.gpu', '49']
+            self._log(f'Command returned: {res}')  # expected: ['temperature.gpu', '49']
 
             if not res['stdout']:
                 raise OSError('no nvidia data')
@@ -172,7 +172,7 @@ class Collector:
             raise OSError(f'Could not probe nvidia: install nvidia-smi, if compatible\n{e}')
 
         data = None if len(res['stdout']) < 2 else float(res['stdout'][1])
-        self._log_debug(f'Fetched data: {data}')
+        self._log(f'Fetched data: {data}')
 
         res = {'gpu': data} if data else {}
         return res
@@ -183,13 +183,13 @@ class Collector:
         Returns:
             (dict): Having values as Megabits (Mb)
         """
-        self._log_debug('Start network devices fetch')
+        self._log('Start network devices fetch')
 
         cmd = f'{CAT_CMD_PATH} /proc/net/dev'
 
         try:
             res = self._run_os_command(cmd)
-            self._log_debug(f'Command returned: {res}')  # expected: ['20000', '47050', '61050',]
+            self._log(f'Command returned: {res}')  # expected: ['20000', '47050', '61050',]
 
             if not res['stdout'] or len(res['stdout']) < 3:
                 raise OSError('no network device data')
@@ -210,7 +210,7 @@ class Collector:
             mbits_in, mbits_out = (int(info[0]) * 8) / 1000 ** 2, (int(info[8]) * 8) / 1000 ** 2
             data[device] = {'in': round(mbits_in, 1), 'out': round(mbits_out, 1)}
 
-        self._log_debug(f'Fetched data: {data}')
+        self._log(f'Fetched data: {data}')
         res = {'net': data} if data else {}
         return res
 
@@ -224,13 +224,13 @@ class Collector:
 
         for partition in disk_partitions():
             if partition.mountpoint.startswith('/snap'):
-                self._log_debug(f'Skip shutil data for {partition.mountpoint}')
+                self._log(f'Skip shutil data for {partition.mountpoint}')
                 continue
 
             data[partition.mountpoint] = {}
 
             usage = disk_usage(partition.mountpoint)
-            self._log_debug(f'shutil returned for {partition.mountpoint}: {usage}')
+            self._log(f'shutil returned for {partition.mountpoint}: {usage}')
 
             for k in dir(usage):
                 if k.startswith('_') or callable(usage.__getattribute__(k)):
@@ -240,7 +240,7 @@ class Collector:
                 mibytes = val_bytes / 1024 ** 2
                 data[partition.mountpoint].update({k: round(mibytes, 1)})
 
-        self._log_debug(f'Fetched data: {data}')
+        self._log(f'Fetched data: {data}')
         res = {'storage': data} if data else {}
         return res
 
@@ -251,7 +251,7 @@ class Collector:
             (dict): Having one value in load/usage percentage
         """
         usage = cpu_percent(interval=1)
-        self._log_debug(f'putil returned for CPU usage: {usage}')
+        self._log(f'psutil returned for CPU usage: {usage}')
 
         res = {'cpu': usage}
         return res
@@ -263,18 +263,18 @@ class Collector:
             (dict): Having one value in load/usage percentage
         """
         usage = virtual_memory().percent
-        self._log_debug(f'putil returned for RAM usage: {usage}')
+        self._log(f'psutil returned for RAM usage: {usage}')
 
         res = {'ram': usage}
         return res
 
     def _identify(self):
-        self._log_debug('Start device identification')
+        self._log('Start device identification')
         cmd = f'{HOSTNAME_CMD_PATH} -s'
 
         try:
             res = self._run_os_command(cmd)
-            self._log_debug(f"Command returned: {res}")
+            self._log(f"Command returned: {res}")
 
             if not res['stdout']:
                 raise OSError("no hostname data")
@@ -310,8 +310,8 @@ class Collector:
 
         return data
 
-    def _log_debug(self, msg: str):
+    def _log(self, msg: str, level: int = 10):
         if not self.logger:
             return
 
-        self.logger.debug(msg)
+        self.logger.log(level, msg)

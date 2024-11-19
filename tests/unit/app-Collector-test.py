@@ -32,5 +32,5 @@ def class_object_test(class_object):
 
 
 def method_log_test(class_object, caplog):
-    class_object._log_debug("pytest log entry")
+    class_object._log("pytest log entry")
     assert not caplog.text
