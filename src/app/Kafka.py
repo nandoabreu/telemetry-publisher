@@ -23,7 +23,7 @@ class Producer:
         self.log_debug(f'Connected to: {settings["bootstrap.servers"]!r}')
 
     def stream(self, messages: iter, topic: str, key: str = None):
-        """Stream messages
+        """Stream (produce, publish) messages
 
         Args:
             messages (iter with dicts): Dict messages to be streamed, as in: [{'key': 'value'}]
@@ -31,12 +31,13 @@ class Producer:
             key (str, optional): Tag the message envelope at topic level
         """
         for message in messages:
-            params = dict(
-                topic=topic,
-                key=key.encode() if key else None,
-                value=dumps(message, separators=(',', ':'), default=str).encode(),
-                callback=self.__report,
-            )
+            params = {
+                'timestamp': int(message.pop('epoch') * 10 ** 3),
+                'topic': topic,
+                'key': key.encode() if key else None,
+                'value': dumps(message, separators=(',', ':'), default=str).encode(),
+                'callback': self.__report,
+            }
 
             self.__kafka.produce(**{k: v for k, v in params.items() if v})
             self._counter += 1
