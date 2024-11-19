@@ -58,7 +58,12 @@ class Collector:
                 # Default config is to not append the label in net or storage, because both have single data sources
             }.items():
                 label, append_label = config.values()
-                res = future.result()  # Get the return value from the method
+
+                try:
+                    res = future.result()  # Get the return value from the method
+                except Exception as e:
+                    self._log(f'Task {label!r} raised an exception: {e}', 30)
+                    continue
 
                 if not res:
                     self._log(f'No data from {label}')
