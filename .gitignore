@@ -250,6 +250,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+**/.deps/
 
 # Spyder project settings
 .spyderproject
